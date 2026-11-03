@@ -18,9 +18,20 @@ COPY texlive.profile packages.txt /tmp/
 # install-tl verifies the package database signature when gpg is available.
 RUN set -eux; \
     mkdir /tmp/install-tl; \
-    curl -fsSL "${TEXLIVE_MIRROR}/install-tl-unx.tar.gz" | tar -xz -C /tmp/install-tl --strip-components=1; \
-    /tmp/install-tl/install-tl -profile /tmp/texlive.profile -repository "${TEXLIVE_MIRROR}"; \
+    # mirror.ctan.org sends each request to a random nearby mirror, and now and then one has a
+    # broken HTTPS setup. Ask again until one works, then use that mirror for the whole install.
+    url=; \
+    for attempt in 1 2 3 4 5; do \
+      url="$(curl -fsSL -o /tmp/install-tl-unx.tar.gz -w '%{url_effective}' "${TEXLIVE_MIRROR}/install-tl-unx.tar.gz")" && break; \
+      echo "Mirror failed (attempt $attempt), asking for another"; url=; sleep 5; \
+    done; \
+    [ -n "$url" ]; \
+    repo="${url%/install-tl-unx.tar.gz}"; \
+    echo "Using $repo"; \
+    tar -xzf /tmp/install-tl-unx.tar.gz -C /tmp/install-tl --strip-components=1; \
+    /tmp/install-tl/install-tl -profile /tmp/texlive.profile -repository "$repo"; \
     export PATH="$(echo /usr/local/texlive/bin/*):${PATH}"; \
+    tlmgr option repository "$repo"; \
     # --no-depends keeps out LuaTeX, Latin Modern and other things pdfLaTeX never uses.
     # tlmgr then exits non-zero because it cannot build the LuaLaTeX formats, and it
     # exits zero when a download fails, so its status is ignored and checked below.
@@ -39,6 +50,8 @@ RUN set -eux; \
     if [ -n "$missing" ]; then echo "Not installed: $missing" >&2; exit 1; fi; \
     fmtutil-sys --byfmt pdflatex; \
     kpsewhich -engine=pdftex pdflatex.fmt; \
+    # Later tlmgr runs in the image pick a mirror the usual way.
+    tlmgr option repository "${TEXLIVE_MIRROR}"; \
     # pdfLaTeX never reads AFM metrics or OpenType fonts; METAFONT sources are useless without METAFONT.
     rm -rf /usr/local/texlive/texmf-dist/fonts/afm /usr/local/texlive/texmf-dist/fonts/opentype \
            /usr/local/texlive/texmf-dist/fonts/source \
