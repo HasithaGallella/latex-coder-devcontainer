@@ -1,8 +1,10 @@
 # LaTeX Coder Dev Container
 
-TeX Live for pdfLaTeX and BibTeX on Debian slim, built for the LaTeX Coder VS Code extension
-(`hasitha-gallella.latex-coder`). It compiles conference papers, CVs and proposals with nothing to
-install on your machine but Docker.
+**Get the extension:** [LaTeX Coder on the VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=hasitha-gallella.latex-coder)
+
+TeX Live for pdfLaTeX and BibTeX on Debian slim, built for the LaTeX Coder VS Code extension. It
+compiles conference papers, CVs and proposals with nothing to install on your machine but Docker.
+The extension sets it up for you with **Setup Now**.
 
 ```
 ghcr.io/hasithagallella/latex-coder:basic
