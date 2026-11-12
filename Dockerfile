@@ -8,7 +8,7 @@
 
 ARG DEBIAN_IMAGE=debian:trixie-slim
 
-# Stage 1: install TeX Live. Download tools stay here and never reach the final image.
+# Stage 1: install TeX Live, with the tools it takes to download and verify it.
 FROM ${DEBIAN_IMAGE} AS texlive
 ARG TEXLIVE_MIRROR=https://mirror.ctan.org/systems/texlive/tlnet
 RUN apt-get update \
@@ -59,7 +59,9 @@ RUN set -eux; \
            /usr/local/texlive/install-tl.log /usr/local/texlive/texmf-var/web2c/*/*.log; \
     mktexlsr
 
-# Stage 2: the runtime image. Perl is for latexmk.
+# Stage 2: the runtime image. Perl is for latexmk and tlmgr. curl, its certificates and gpg let
+# tlmgr download packages and check their signatures in LaTeX Coder's package terminal; the
+# containers that compile have no network.
 FROM ${DEBIAN_IMAGE}
 ARG USERNAME=vscode
 ARG USER_UID=1000
@@ -67,7 +69,7 @@ LABEL org.opencontainers.image.title="LaTeX Coder" \
       org.opencontainers.image.source="https://github.com/HasithaGallella/latex-coder-devcontainer" \
       org.opencontainers.image.description="pdfLaTeX for conference papers, for the LaTeX Coder VS Code extension"
 RUN apt-get update \
- && apt-get install -y --no-install-recommends perl \
+ && apt-get install -y --no-install-recommends perl ca-certificates curl gpg \
  && rm -rf /var/lib/apt/lists/* \
  && useradd --create-home --uid "${USER_UID}" --shell /bin/bash "${USERNAME}"
 COPY --from=texlive /usr/local/texlive /usr/local/texlive
