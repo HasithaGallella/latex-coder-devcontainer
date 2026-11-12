@@ -2,6 +2,34 @@
 
 The [LaTeX Coder](https://marketplace.visualstudio.com/items?itemName=hasitha-gallella.latex-coder) extension includes an MCP server, so AI coding agents can compile and check LaTeX projects. It runs on your computer and compiles in the [LaTeX Coder container](../README.md), or with a local TeX installation.
 
+## How it works
+
+```mermaid
+flowchart LR
+  subgraph Agents
+    T["Claude Code or Codex<br/>(terminal)"]
+    E["Copilot, Cursor or<br/>Antigravity agent"]
+  end
+  subgraph Computer["Your computer"]
+    S["LaTeX Coder MCP server<br/>(the editor's Node.js)"]
+    O["Open LaTeX files<br/>(written by the editor)"]
+    B["Build folder<br/>(user cache)"]
+    X["LaTeX Coder tab<br/>(VS Code or Antigravity)"]
+  end
+  C[("Compile container<br/>no network")]
+  P[("Package container<br/>CTAN")]
+  T -- "MCP (stdio)" --> S
+  E -- "MCP (stdio)" --> S
+  S -- "which paper" --> O
+  S -- compile --> C
+  S -- "install packages" --> P
+  C -- "PDF and log" --> B
+  B -- "PDF and errors" --> X
+  X -- "open files" --> O
+```
+
+The agent starts the server and calls its tools over MCP. The server finds the paper from the agent's working folder or the files open in the editor, compiles it in the container, and returns the errors. The editor's LaTeX Coder tab shows the new PDF and errors.
+
 ## Connect an agent
 
 Run **Connect AI Agents (MCP)** from the Command Palette or from LaTeX Coder's Quick Actions. LaTeX Coder asks before it changes an agent's settings, and the same command disconnects it.
